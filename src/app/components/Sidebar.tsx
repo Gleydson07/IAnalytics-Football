@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import ReorderModal from './ReorderModal'
 import type { PreferredLeague } from '@/lib/football'
 
 type Props = {
@@ -10,6 +11,8 @@ type Props = {
 }
 
 export default function Sidebar({ preferred, selectedLeagueId, onSelectLeague }: Props) {
+  const [reorderOpen, setReorderOpen] = useState(false)
+
   // Apenas o primeiro país abre por padrão; os demais começam fechados.
   const [openCountries, setOpenCountries] = useState<Set<string>>(() => {
     const groups = groupByCountry(preferred)
@@ -43,6 +46,16 @@ export default function Sidebar({ preferred, selectedLeagueId, onSelectLeague }:
           <span style={{ flex: 1, fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Minhas ligas
           </span>
+          {preferred.length > 1 && (
+            <button
+              onClick={() => setReorderOpen(true)}
+              title="Reordenar ligas"
+              aria-label="Reordenar ligas"
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 14, lineHeight: 1, padding: 2, marginRight: 8, cursor: 'pointer' }}
+            >
+              ✎
+            </button>
+          )}
           <Link
             href="/minhas-ligas"
             title="Configurar minhas ligas"
@@ -79,6 +92,8 @@ export default function Sidebar({ preferred, selectedLeagueId, onSelectLeague }:
             )
           })}
       </nav>
+
+      {reorderOpen && <ReorderModal leagues={preferred} onClose={() => setReorderOpen(false)} />}
     </aside>
   )
 }
@@ -100,9 +115,8 @@ function groupByCountry(leagues: PreferredLeague[]): CountryGroup[] {
     if (arr) arr.push(l)
     else map.set(l.country, [l])
   }
-  return Array.from(map.entries())
-    .map(([country, ls]) => ({ country, leagues: ls }))
-    .sort((a, b) => a.country.localeCompare(b.country))
+  // Preserva a ordem de inserção (que segue o sortOrder das preferidas).
+  return Array.from(map.entries()).map(([country, ls]) => ({ country, leagues: ls }))
 }
 
 function SidebarItem({ label, logo, active, onClick }: {

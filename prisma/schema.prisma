@@ -14,6 +14,7 @@ model PreferredLeague {
   country   String
   season    Int
   logo      String?
+  sortOrder Int      @default(0) @map("sort_order")
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("preferred_leagues")

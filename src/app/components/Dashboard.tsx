@@ -30,8 +30,6 @@ export default function Dashboard({ initialDate, initialFixtures, loadError }: P
   const [aiText, setAiText] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
 
-  const preferredIds = new Set(preferred.map(p => p.leagueId))
-
   // Ao trocar de liga pela sidebar, volta para a lista de jogos.
   useEffect(() => { setSelectedFixture(null) }, [selectedLeagueId])
 
@@ -86,7 +84,7 @@ export default function Dashboard({ initialDate, initialFixtures, loadError }: P
       ) : selectedLeagueId !== null ? (
         <LeagueAgenda fixtures={windowFixtures} loading={loadingWindow} onSelectFixture={selectFixture} />
       ) : (
-        <DayFixtures fixtures={initialFixtures} preferredIds={preferredIds} selectedLeagueId={null} loading={false} onSelectFixture={selectFixture} />
+        <DayFixtures fixtures={initialFixtures} preferred={preferred} loading={false} onSelectFixture={selectFixture} />
       )}
     </main>
   )

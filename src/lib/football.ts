@@ -42,6 +42,15 @@ export async function removePreferredLeague(leagueId: number): Promise<void> {
   if (!res.ok) throw new Error(`API error ${res.status}`)
 }
 
+export async function reorderPreferredLeagues(leagueIds: number[]): Promise<void> {
+  const res = await fetch('/api/preferences', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ order: leagueIds }),
+  })
+  if (!res.ok) throw new Error(`API error ${res.status}`)
+}
+
 export async function getFixtureComparison(fixture: Fixture): Promise<FixtureComparison> {
   const res = await fetch('/api/compare', {
     method: 'POST',

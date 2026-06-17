@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GetPreferredLeaguesUseCase } from '@/application/use-cases/get-preferred-leagues.use-case'
 import { AddPreferredLeagueUseCase } from '@/application/use-cases/add-preferred-league.use-case'
 import { RemovePreferredLeagueUseCase } from '@/application/use-cases/remove-preferred-league.use-case'
+import { ReorderPreferredLeaguesUseCase } from '@/application/use-cases/reorder-preferred-leagues.use-case'
 import { PrismaPreferredLeagueRepository } from '@/infrastructure/database/prisma/preferred-league.repository'
 
 export const dynamic = 'force-dynamic'
@@ -26,6 +27,17 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error('[preferences:POST]', err)
     return NextResponse.json({ error: 'Erro ao adicionar liga' }, { status: 400 })
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const { order } = await req.json()
+    await new ReorderPreferredLeaguesUseCase(repository).execute(order)
+    return new NextResponse(null, { status: 204 })
+  } catch (err) {
+    console.error('[preferences:PATCH]', err)
+    return NextResponse.json({ error: 'Erro ao reordenar ligas' }, { status: 400 })
   }
 }
 

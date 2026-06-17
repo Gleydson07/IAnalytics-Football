@@ -5,7 +5,7 @@ import { prisma } from '../prisma.service'
 export class PrismaPreferredLeagueRepository extends PreferredLeagueRepository {
   async findAll(): Promise<PreferredLeague[]> {
     const rows = await prisma.preferredLeague.findMany({
-      orderBy: [{ country: 'asc' }, { name: 'asc' }],
+      orderBy: [{ sortOrder: 'asc' }, { country: 'asc' }, { name: 'asc' }],
     })
     return rows.map(toEntity)
   }
@@ -17,16 +17,25 @@ export class PrismaPreferredLeagueRepository extends PreferredLeagueRepository {
       season: league.season,
       logo: league.logo ?? null,
     }
+    const count = await prisma.preferredLeague.count()
     const row = await prisma.preferredLeague.upsert({
       where: { leagueId: league.leagueId },
       update: data,
-      create: { leagueId: league.leagueId, ...data },
+      create: { leagueId: league.leagueId, sortOrder: count, ...data },
     })
     return toEntity(row)
   }
 
   async remove(leagueId: number): Promise<void> {
     await prisma.preferredLeague.deleteMany({ where: { leagueId } })
+  }
+
+  async reorder(leagueIds: number[]): Promise<void> {
+    await prisma.$transaction(
+      leagueIds.map((leagueId, index) =>
+        prisma.preferredLeague.updateMany({ where: { leagueId }, data: { sortOrder: index } }),
+      ),
+    )
   }
 }
 

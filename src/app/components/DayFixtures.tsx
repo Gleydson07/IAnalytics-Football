@@ -1,13 +1,12 @@
 'use client'
 import { useState } from 'react'
-import type { Fixture } from '@/lib/football'
+import type { Fixture, PreferredLeague } from '@/lib/football'
 import { translateCountry } from '@/lib/countries'
 import FixtureRow from './FixtureRow'
 
 type Props = {
   fixtures: Fixture[]
-  preferredIds: Set<number>
-  selectedLeagueId: number | null
+  preferred: PreferredLeague[]
   loading: boolean
   onSelectFixture: (f: Fixture) => void
 }
@@ -20,7 +19,7 @@ interface LeagueGroup {
   fixtures: Fixture[]
 }
 
-function groupByLeague(fixtures: Fixture[]): LeagueGroup[] {
+function groupByLeague(fixtures: Fixture[], orderIndex: Map<number, number>): LeagueGroup[] {
   const map = new Map<number, LeagueGroup>()
   for (const f of fixtures) {
     let g = map.get(f.league.id)
@@ -30,12 +29,15 @@ function groupByLeague(fixtures: Fixture[]): LeagueGroup[] {
     }
     g.fixtures.push(f)
   }
+  const rank = (id: number) => orderIndex.get(id) ?? Number.MAX_SAFE_INTEGER
   return Array.from(map.values())
-    .sort((a, b) => a.country.localeCompare(b.country) || a.name.localeCompare(b.name))
+    .sort((a, b) => rank(a.id) - rank(b.id) || a.country.localeCompare(b.country) || a.name.localeCompare(b.name))
 }
 
-export default function DayFixtures({ fixtures, preferredIds, selectedLeagueId, loading, onSelectFixture }: Props) {
+export default function DayFixtures({ fixtures, preferred, loading, onSelectFixture }: Props) {
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set())
+  const preferredIds = new Set(preferred.map(p => p.leagueId))
+  const orderIndex = new Map(preferred.map((p, i) => [p.leagueId, i]))
 
   const toggle = (id: number) => {
     setCollapsed(prev => {
@@ -50,10 +52,7 @@ export default function DayFixtures({ fixtures, preferredIds, selectedLeagueId, 
     return <div style={{ color: 'var(--text-muted)', fontSize: 14, padding: '32px 0', textAlign: 'center' }}>Carregando jogos...</div>
   }
 
-  const filtered = fixtures.filter(f => {
-    if (selectedLeagueId) return f.league.id === selectedLeagueId
-    return preferredIds.size === 0 || preferredIds.has(f.league.id)
-  })
+  const filtered = fixtures.filter(f => preferredIds.size === 0 || preferredIds.has(f.league.id))
 
   if (!filtered.length) {
     return (
@@ -66,7 +65,7 @@ export default function DayFixtures({ fixtures, preferredIds, selectedLeagueId, 
 
   return (
     <div>
-      {groupByLeague(filtered).map(group => {
+      {groupByLeague(filtered, orderIndex).map(group => {
         const open = !collapsed.has(group.id)
         const title = group.country ? `${translateCountry(group.country)} — ${group.name}` : group.name
         return (
